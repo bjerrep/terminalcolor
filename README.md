@@ -1,6 +1,6 @@
 # terminalcolor
 
-A couple of bash scripts to manually set text and background colors in terminals. 
+A couple of bash scripts to set text and background colors in terminals. 
 
 A total of 3 ways exist to set the colors, see the picture below. 
 
@@ -10,7 +10,7 @@ A total of 3 ways exist to set the colors, see the picture below.
 
 
 
-### terminalcolor.sh (the menu to the left)
+### terminalcolor.sh (the menu to the left above)
 
 Shows a menu with the combinations found in the 'terminalcolor.colorscheme' file. Use the arrowkeys to go up and down and press enter to select a combination. It looks kind of cool but can be slightly baffling to use.
 
@@ -53,6 +53,14 @@ export PATH=$PATH:~/<path>/terminalcolor
 
 If a bold attribute is shown in the menu but disappear right away then it is probably an advanced prompt that resets it. Try 'printf "\e[1m"' to see what happens, it should enable bold text.
 
+In case you want to tinker yourself then the command that is used to set the text color and background colors is this printf statement (found in 'terminalcolor.alias'):
+
+```
+printf "\e]10;#000000\a\e]11;#FFFF10\a"
+```
+
+
+
 ## Links
 
 The post that kicked this project off
@@ -61,10 +69,6 @@ https://unix.stackexchange.com/questions/474502/how-to-set-the-background-color-
 Actual terminal colors and escapes
 https://chrisyeh96.github.io/2020/03/28/terminal-colors.html
 
-The 'inline' menu
+The 'inline' menu was found on stackexhange:
 https://unix.stackexchange.com/questions/146570/arrow-key-enter-menu/673436#673436
-
-
-
-
 
