@@ -1,0 +1,106 @@
+#!/bin/bash
+# 
+# Intended to be sourced and called via the terminalcolor() command or some of 
+# the aliases at the end of the script.
+#
+LOCATION=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+reset="\e[0m"
+
+# Make the central dictionary of human readable colornames and their RGB value from
+# the file "terminalcolor.rgb" in the form of color=RRGGBB[M].
+# The RGB value must be of fixed length of 6 and an optional 7th character will be 
+# used as mode, see https://chrisyeh96.github.io/2020/03/28/terminal-colors.html
+# 
+declare -A color2rgb
+
+while IFS='=' read -r key value; do
+    color2rgb["$key"]="$value"
+done < "${LOCATION}/terminalcolor.rgb"
+
+
+get_rgb() {
+    local -n rgb="$2"
+    rgb="${color2rgb[$1]}" > /dev/null
+    if [[ -z "${rgb}" ]]; then
+        echo "Unknown color '$1'"
+    fi
+}
+
+# Directly print a text in a specified text and background color with an optional final color reset.
+# Example: 'colorprint black white "hi there\n" reset'
+# Note that the use of RGB is very non standard but is at least working on bash 5.2
+#
+colorprint() {
+    get_rgb "$1" textrgb
+    get_rgb "$2" backrgb
+    
+    if [[ -z "${textrgb}" || -z "${backrgb}" ]]; then
+        return 1
+    fi
+    
+    local textmode=""
+    if [[ ${#textrgb} = 7 ]]; then
+        textmode="\e[${textrgb:6:1}m"
+    fi
+
+    local textred=$((16#${textrgb:0:2}))
+    local textgreen=$((16#${textrgb:2:2}))
+    local textblue=$((16#${textrgb:4:2}))
+
+    local backred=$((16#${backrgb:0:2}))
+    local backgreen=$((16#${backrgb:2:2}))
+    local backblue=$((16#${backrgb:4:2}))
+   
+    if [[ $4 = "reset" ]]; then rst=$reset; fi
+
+    # Avoid a glitch background color line when the text contains an trailing newline by
+    # performing the reset before the newline is emitted.
+    # Works when the sun is shining. I dont hate bash but bash hates me.
+    newline=""
+    text=$3
+    last2char=$(printf "%s" "$3" | tail -c 2)
+    
+    if [[ $last2char = "\n" ]]; then
+        text=${text::-2}
+        newline="\n"
+    fi
+  
+    printf "${textmode}\e[38;2;${textred};${textgreen};${textblue}m\e[48;2;${backred};${backgreen};${backblue}m${text}${rst}${newline}"
+}
+
+
+# Directly set the terminal text color and background color from human readable names.
+# The color names must be present as keys in the color2rgb dictionary above.
+# Example: 'terminalcolor red white'
+# See https://unix.stackexchange.com/questions/474502/how-to-set-the-background-color-of-the-linux-console-screen
+#
+terminalcolor() {
+    get_rgb "$1" textrgb
+    get_rgb "$2" backrgb
+
+    if [[ -z "${textrgb}" || -z "${backrgb}" ]]; then
+        return 1
+    fi
+
+    textmode="\e[0m"
+    if [[ ${#textrgb} = 7 ]]; then
+        textmode="\e[${textrgb:6:1}m"
+        textrgb=${textrgb:0:6}
+    fi
+
+    printf %b "${textmode}\e]10;#${textrgb}\a\e]11;#${backrgb}\a"
+}
+
+
+# Shortform terminalcolor commands. Try 'tc_<tab><tab>'
+# For now its just a couple of hardcoded aliases.
+#
+tc_wg()   { ( terminalcolor white green ) }
+tc_wb()   { ( terminalcolor white black ) }
+tc_bw()   { ( terminalcolor black white ) }
+tc_rw()   { ( terminalcolor red white ) }
+tc_by()   { ( terminalcolor black yellow ) }
+tc_ybb()  { ( terminalcolor yellowbold black) }
+tc_ybbl() { ( terminalcolor yellowbold blue ) }
+tc_wbm()  { ( terminalcolor whitebold magenta ) }
